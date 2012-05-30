@@ -27,3 +27,33 @@ class CreationTest(unittest.TestCase):
         self.assertEqual(question1.answers.all().count(), 2)
         self.assertEqual(answerprofile1_1.quantifier, 10)
         self.assertEqual(answerprofile1_2.quantifier, 20)
+
+
+class WalkthroughTest(unittest.TestCase):
+    def setUp(self):
+        Poll.objects.all().delete()
+        self.poll1 = Poll.objects.create()
+        self.profile1 = Profile.objects.create(text='Superlover')
+        self.profile2 = Profile.objects.create(text='Virgin')
+
+        self.question1 = self.poll1.questions.create(text='How many lovers did you have')
+        self.answer1_1 = self.question1.answers.create(text='10')
+        self.answer1_1.answerprofiles.create(profile=self.profile1, quantifier=10)
+        self.answer1_2 = self.question1.answers.create(text='0')
+        self.answer1_2.answerprofiles.create(profile=self.profile2, quantifier=20)
+
+        self.question2 = self.poll1.questions.create(text='At which age did you have your first time')
+        self.answer2_1 = self.question1.answers.create(text='16')
+        self.answer1_1.answerprofiles.create(profile=self.profile1, quantifier=10)
+        self.answer2_2 = self.question1.answers.create(text='Never')
+        self.answer1_2.answerprofiles.create(profile=self.profile2, quantifier=25)
+
+    def test_simplewalkthrough(self):
+        walkthrough = self.poll1.walkthroughs.create()
+        walkthrough.answers.add(self.answer1_1)
+        self.assertFalse(walkthrough.completed)
+        self.assertEqual(self.getMostMatchingProfile(), self.profile1)
+        walkthrough.answers.add(self.answer2_2)
+        self.assertTrue(walkthrough.completed)
+        self.assertEqual(self.getMostMatchingProfile(), self.profile2)
+
