@@ -19,3 +19,14 @@ class Question(models.Model, TimestampMixin):
 class Answer(models.Model, TimestampMixin):
     question = models.ForeignKey(Question, related_name='answers')
     text = models.TextField(_('text'))
+
+
+class Profile(models.Model, TimestampMixin):
+    text = models.TextField(_('text'))
+    answers = models.ManyToManyField(Answer, through='AnswerProfile', related_name='profiles')
+
+
+class AnswerProfile(models.Model, TimestampMixin):
+    answer = models.ForeignKey(Answer, related_name='answerprofiles')
+    profile = models.ForeignKey(Profile, related_name='answerprofiles')
+    quantifier = models.IntegerField(_('quantifier'), default=1)
