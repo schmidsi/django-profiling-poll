@@ -43,17 +43,17 @@ class WalkthroughTest(unittest.TestCase):
         self.answer1_2.answerprofiles.create(profile=self.profile2, quantifier=20)
 
         self.question2 = self.poll1.questions.create(text='At which age did you have your first time')
-        self.answer2_1 = self.question1.answers.create(text='16')
-        self.answer1_1.answerprofiles.create(profile=self.profile1, quantifier=10)
-        self.answer2_2 = self.question1.answers.create(text='Never')
-        self.answer1_2.answerprofiles.create(profile=self.profile2, quantifier=25)
+        self.answer2_1 = self.question2.answers.create(text='16')
+        self.answer2_1.answerprofiles.create(profile=self.profile1, quantifier=10)
+        self.answer2_2 = self.question2.answers.create(text='Never')
+        self.answer2_2.answerprofiles.create(profile=self.profile2, quantifier=25)
 
     def test_simplewalkthrough(self):
         walkthrough = self.poll1.walkthroughs.create()
         walkthrough.answers.add(self.answer1_1)
         self.assertFalse(walkthrough.completed)
-        self.assertEqual(self.getMostMatchingProfile(), self.profile1)
+        self.assertEqual(walkthrough.get_most_matching_profile(), self.profile1)
         walkthrough.answers.add(self.answer2_2)
         self.assertTrue(walkthrough.completed)
-        self.assertEqual(self.getMostMatchingProfile(), self.profile2)
+        self.assertEqual(walkthrough.get_most_matching_profile(), self.profile2)
 
