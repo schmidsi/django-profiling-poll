@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from django.db import models
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from django.template.defaultfilters import truncatechars
 
@@ -45,49 +47,65 @@ class Walkthrough(models.Model, TimestampMixin):
     poll = models.ForeignKey(Poll, related_name='walkthroughs')
     answers = models.ManyToManyField(Answer, blank=True, null=True)
 
+    # Denormalizations
     _completed = models.DateTimeField(blank=True, null=True)
+    _answered_questions = models.ManyToManyField(Question)
+    _profiles = models.ManyToManyField(Profile, through='WalkthroughProfile', blank=True, null=True,
+        related_name='walkthrough_set')
+
+    @property
+    def answered_questions(self):
+        return self._answered_questions.all()
 
     @property
     def completed(self):
-        questions = set(self.poll.questions.all().select_related('answers'))
-        answers = set(self.answers.all())
-        answered_questions = set()
+        return self._completed
 
-        for question in questions:
-            for answer in answers:
-                if answer in question.answers.all():
-                    answered_questions.add(question)
+    def get_matching_profile(self):
+        return self.walkthroughprofiles.order_by('-quantifier')[0].profile
 
-        if answered_questions == questions:
-            self._completed = datetime.now()
-            self.save()
-            return self._completed
 
-        else:
-            self._completed = None
-            self.save()
-            return self._completed
+class WalkthroughProfile(models.Model, TimestampMixin):
+    walkthrough = models.ForeignKey(Walkthrough, related_name='walkthroughprofiles')
+    profile = models.ForeignKey(Profile, related_name='walkthroughprofiles')
+    quantifier = models.IntegerField(_('quantifier'), default=1)
 
-    def get_quantified_profiles(self):
-        quantified_profiles = {}
 
-        for answer in self.answers.all().select_related('answerprofiles'):
+@receiver(m2m_changed, sender=Walkthrough.answers.through)
+def denormalize_walkthrough(signal, sender, instance, action, reverse, model, pk_set, using):
+    if 'post' in action and pk_set and len(pk_set):
+
+        answer = model.objects.get(pk=pk_set.pop())
+
+        if 'add' in action:
+            instance._answered_questions.add(answer.question)
+
             for answer_profile in answer.answerprofiles.all():
-                if answer_profile.profile in quantified_profiles:
-                    quantified_profiles[answer_profile.profile] =+ answer_profile.quantifier
+                if not answer_profile.profile in instance._profiles.all():
+                    WalkthroughProfile.objects.create(
+                        walkthrough = instance,
+                        profile = answer_profile.profile,
+                        quantifier = answer_profile.quantifier
+                    )
                 else:
-                    quantified_profiles[answer_profile.profile] = answer_profile.quantifier
+                    walkthroughprofile = instance.walkthroughprofiles.get(profile=answer_profile.profile)
+                    walkthroughprofile.quantifier += answer_profile.quantifier
+                    walkthroughprofile.save()
+        elif 'remove' in action:
+            instance._answered_questions.remove(answer.question)
 
-        return quantified_profiles
+            for answer_profile in answer.answerprofiles.all():
+                if answer_profile.profile in instance._profiles.all():
+                    walkthroughprofile = instance.walkthroughprofiles.get(profile=answer_profile.profile)
+                    walkthroughprofile.quantifier -= answer_profile.quantifier
+                    walkthroughprofile.save()
 
-    def get_most_matching_profile(self):
-        quantified_profiles = self.get_quantified_profiles()
-        highest_quantifing = 0
-        candidate = None
+        if instance._answered_questions.all().count() == instance.poll.questions.all().count():
+            instance._completed = datetime.now()
+        else:
+            instance._completed = None
 
-        for profile in quantified_profiles:
-            if quantified_profiles[profile] > highest_quantifing:
-                highest_quantifing = quantified_profiles[profile]
-                candidate = profile
+    elif 'post_clear' in action:
+        instance._answered_questions.clear()
+        instance._profiles.clear()
 
-        return candidate
