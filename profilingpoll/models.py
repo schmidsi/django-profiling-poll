@@ -16,15 +16,23 @@ class TimestampMixin(models.Model):
 
 
 class Poll(TimestampMixin):
+    active = models.BooleanField(default=False)
+    title = models.CharField(max_length=50)
+    slug = models.SlugField(unique=True)
     description = models.TextField(_('description'), blank=True, null=True)
 
     def __unicode__(self):
         return truncatechars(self.description, 50)
 
+    @models.permalink
+    def get_absolute_url(self):
+        return ('profilingpoll_poll_detail', (), {'poll_slug' : self.slug})
+
 
 class Question(TimestampMixin):
     poll = models.ForeignKey(Poll, related_name='questions')
     text = models.TextField(_('text'))
+    ordering = models.PositiveIntegerField(default=0)
 
     def __unicode__(self):
         return truncatechars(self.text, 50)
@@ -33,6 +41,7 @@ class Question(TimestampMixin):
 class Answer(TimestampMixin):
     question = models.ForeignKey(Question, related_name='answers')
     text = models.TextField(_('text'))
+    ordering = models.PositiveIntegerField(default=0)
 
     def __unicode__(self):
         return truncatechars(self.text, 50)

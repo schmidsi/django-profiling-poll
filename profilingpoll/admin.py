@@ -9,7 +9,9 @@ def inline(model, inline_class=admin.StackedInline, **kwargs):
 
 
 admin.site.register(Poll,
-    list_display = ('description', 'created', 'modified'),
+    list_display = ('title', 'active', 'created', 'modified'),
+    list_filter = ('active',),
+    prepopulated_fields = {'slug': ('title',)},
     inlines = [
         inline(Question, extra=0),
     ]
