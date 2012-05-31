@@ -38,5 +38,13 @@ admin.site.register(Profile,
 
 admin.site.register(Walkthrough,
     list_display = ('poll', '_completed'),
-    list_filter = ('poll',)
+    list_filter = ('poll',),
+    readonly_fields = ('_answered_questions', '_completed', '_profiles'),
+    inlines = [
+        inline(WalkthroughProfile,
+            extra=0,
+            max_num=0,
+            readonly_fields = ('walkthrough', 'profile', 'quantifier')
+        )
+    ]
 )
