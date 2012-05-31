@@ -18,18 +18,24 @@ class TimestampMixin(models.Model):
 class Poll(TimestampMixin):
     description = models.TextField(_('description'), blank=True, null=True)
 
+    def __unicode__(self):
+        return truncatechars(self.description, 50)
+
 
 class Question(TimestampMixin):
     poll = models.ForeignKey(Poll, related_name='questions')
     text = models.TextField(_('text'))
 
     def __unicode__(self):
-        return truncatechars(self.text, 15)
+        return truncatechars(self.text, 50)
 
 
 class Answer(TimestampMixin):
     question = models.ForeignKey(Question, related_name='answers')
     text = models.TextField(_('text'))
+
+    def __unicode__(self):
+        return truncatechars(self.text, 50)
 
 
 class Profile(TimestampMixin):
@@ -37,7 +43,7 @@ class Profile(TimestampMixin):
     answers = models.ManyToManyField(Answer, through='AnswerProfile', related_name='profiles')
 
     def __unicode__(self):
-        return truncatechars(self.text, 15)
+        return truncatechars(self.text, 50)
 
 
 class AnswerProfile(TimestampMixin):
