@@ -7,16 +7,19 @@ from django.utils.translation import ugettext_lazy as _
 from django.template.defaultfilters import truncatechars
 
 
-class TimestampMixin(object):
+class TimestampMixin(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        abstract = True
 
-class Poll(models.Model, TimestampMixin):
+
+class Poll(TimestampMixin):
     description = models.TextField(_('description'), blank=True, null=True)
 
 
-class Question(models.Model, TimestampMixin):
+class Question(TimestampMixin):
     poll = models.ForeignKey(Poll, related_name='questions')
     text = models.TextField(_('text'))
 
@@ -24,12 +27,12 @@ class Question(models.Model, TimestampMixin):
         return truncatechars(self.text, 15)
 
 
-class Answer(models.Model, TimestampMixin):
+class Answer(TimestampMixin):
     question = models.ForeignKey(Question, related_name='answers')
     text = models.TextField(_('text'))
 
 
-class Profile(models.Model, TimestampMixin):
+class Profile(TimestampMixin):
     text = models.TextField(_('text'))
     answers = models.ManyToManyField(Answer, through='AnswerProfile', related_name='profiles')
 
@@ -37,13 +40,13 @@ class Profile(models.Model, TimestampMixin):
         return truncatechars(self.text, 15)
 
 
-class AnswerProfile(models.Model, TimestampMixin):
+class AnswerProfile(TimestampMixin):
     answer = models.ForeignKey(Answer, related_name='answerprofiles')
     profile = models.ForeignKey(Profile, related_name='answerprofiles')
     quantifier = models.IntegerField(_('quantifier'), default=1)
 
 
-class Walkthrough(models.Model, TimestampMixin):
+class Walkthrough(TimestampMixin):
     poll = models.ForeignKey(Poll, related_name='walkthroughs')
     answers = models.ManyToManyField(Answer, blank=True, null=True)
 
@@ -65,14 +68,14 @@ class Walkthrough(models.Model, TimestampMixin):
         return self.walkthroughprofiles.order_by('-quantifier')[0].profile
 
 
-class WalkthroughProfile(models.Model, TimestampMixin):
+class WalkthroughProfile(TimestampMixin):
     walkthrough = models.ForeignKey(Walkthrough, related_name='walkthroughprofiles')
     profile = models.ForeignKey(Profile, related_name='walkthroughprofiles')
     quantifier = models.IntegerField(_('quantifier'), default=1)
 
 
 @receiver(m2m_changed, sender=Walkthrough.answers.through)
-def denormalize_walkthrough(signal, sender, instance, action, reverse, model, pk_set, using):
+def denormalize_walkthrough(signal, sender, instance, action, reverse, model, pk_set, using, **kwargs):
     if 'post' in action and pk_set and len(pk_set):
 
         answer = model.objects.get(pk=pk_set.pop())
