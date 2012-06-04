@@ -26,7 +26,7 @@ class Poll(TimestampMixin):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('profilingpoll_poll_detail', (), {'poll_slug' : self.slug})
+        return ('profilingpoll_poll_detail', (), {'slug' : self.slug})
 
 
 class Question(TimestampMixin):
@@ -36,6 +36,10 @@ class Question(TimestampMixin):
 
     def __unicode__(self):
         return truncatechars(self.text, 50)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('profilingpoll_question', (), {'poll__slug' : self.poll.slug, 'id' : self.id})
 
 
 class Answer(TimestampMixin):
