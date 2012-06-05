@@ -28,6 +28,9 @@ class Poll(TimestampMixin):
     def get_absolute_url(self):
         return ('profilingpoll_poll_detail', (), {'slug' : self.slug})
 
+    def get_first_question(self):
+        return self.questions.all()[0]
+
 
 class Question(TimestampMixin):
     poll = models.ForeignKey(Poll, related_name='questions')

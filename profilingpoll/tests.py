@@ -143,6 +143,7 @@ class RequestWalkthroughTest(TestCase):
 
         # The current walkthrough is sent as context
         self.assertTrue(response.context['walkthrough'])
+        #self.assertTrue(response.context['walkthrough'].completed)
 
         # But removed from the session.
         self.assertEqual(self.client.session['current_walkthrough'], None)
@@ -159,6 +160,8 @@ class RequestWalkthroughTest(TestCase):
         self.assertNotIn('current_walkthrough', self.client.session)
         response = self.client.get('/bester-kurs/3/', follow=True)
         self.assertEqual(response.request['PATH_INFO'], '/bester-kurs/1/')
+
+        # directly open finish also
 
         # TODO: Really test this behaviour
 

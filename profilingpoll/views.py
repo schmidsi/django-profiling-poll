@@ -1,5 +1,6 @@
+from django.core.urlresolvers import reverse
 from django.shortcuts import redirect, get_object_or_404
-from django.views.generic import ListView, RedirectView, FormView
+from django.views.generic import ListView, RedirectView, FormView, DetailView
 from django.views.generic.detail import SingleObjectTemplateResponseMixin, SingleObjectMixin
 
 from .forms import AnswerForm
@@ -67,7 +68,23 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
         if next != None:
             return next.get_absolute_url()
         else:
-            return super(QuestionView, self).get_success_url()
+            return reverse('profilingpoll_poll_finished', kwargs={'slug' : self.object.poll.slug})
+
+class PollFinishView(DetailView):
+    model = Walkthrough
+
+    def get(self, request, *args, **kwargs):
+        if not self.request.session.get('current_walkthrough', None):
+            return redirect(self.get_object().poll.get_first_question())
+
+        if not self.request.session.get('completed_walkthroughs', None):
+            self.request.session['completed_walkthroughs'] = []
+        self.request.session['completed_walkthroughs'].append(self.request.session['current_walkthrough'])
+
+        return super(PollFinishView, self).get(request, *args, **kwargs)
+
+    def get_object(self, queryset=None):
+        return self.request.session['current_walkthrough']
 
 
 poll_list = SingleRedirectToDetailListView.as_view(
@@ -76,3 +93,4 @@ poll_list = SingleRedirectToDetailListView.as_view(
 
 poll_detail = RedirectToFirstQuestion.as_view()
 question = QuestionView.as_view()
+poll_finish = PollFinishView.as_view()
