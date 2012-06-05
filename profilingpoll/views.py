@@ -37,6 +37,16 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
         kwargs['question'] = self.get_object()
         return kwargs
 
+    def get_initial(self):
+        initial = self.initial.copy()
+        walkthrough = self.request.session.get('current_walkthrough', None)
+
+        if walkthrough and self.object in walkthrough.answered_questions:
+            given_answer = walkthrough.answers.filter(question=self.object)[0]
+            initial.update({'answer' : given_answer.id})
+
+        return initial
+
     def get_context_data(self, **kwargs):
         kwargs['object'] = self.get_object()
         kwargs['walkthrough'] = self.request.session.get('current_walkthrough', None)
