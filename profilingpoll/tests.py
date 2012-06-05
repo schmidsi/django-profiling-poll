@@ -1,6 +1,7 @@
 from django.utils import unittest
 
 from .models import Poll, Question, Answer, Profile, AnswerProfile
+from .forms import AnswerForm
 
 
 class CreationTest(unittest.TestCase):
@@ -67,4 +68,13 @@ class WalkthroughTest(unittest.TestCase):
         self.assertEqual(walkthrough.answers.all().count(), 0)
         self.assertEqual(walkthrough._profiles.all().count(), 0)
         self.assertEqual(walkthrough._answered_questions.all().count(), 0)
+
+
+class FormTest(unittest.TestCase):
+    def save_one_answer_test(self):
+        self.question = Question.objects.latest('id')
+        self.form = AnswerForm({'answer' : 1}, question=self.question)
+        self.assertEqual(self.form.fields['answer'].choices, self.question.answers.all().values_list('id', 'text'))
+        self.assertTrue(self.form.is_valid())
+
 

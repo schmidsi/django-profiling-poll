@@ -34,8 +34,17 @@ class Question(TimestampMixin):
     text = models.TextField(_('text'))
     ordering = models.PositiveIntegerField(default=0)
 
+    class Meta:
+        ordering = ('ordering', 'created', 'id')
+
     def __unicode__(self):
         return truncatechars(self.text, 50)
+
+    @property
+    def is_multiple_choice(self):
+        """ for future updates regarding multiple choice questions
+        """
+        return False
 
     @models.permalink
     def get_absolute_url(self):

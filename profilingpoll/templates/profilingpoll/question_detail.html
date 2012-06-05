@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+{{ object.text }}
+<form action="." method="post">
+	<div style="display:none">
+	    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
+	</div>
+	{{ form }}
+	<input type="submit"></input>
+</form>
+{% endblock %}
