@@ -69,6 +69,18 @@ class WalkthroughTest(TestCase):
         self.assertEqual(walkthrough._profiles.all().count(), 0)
         self.assertEqual(walkthrough._answered_questions.all().count(), 0)
 
+    def test_double_answer(self):
+        walkthrough = self.poll1.walkthroughs.create()
+        walkthrough.answers.add(self.answer1_1)
+        self.assertTrue(self.question1 in walkthrough._answered_questions.all())
+        walkthrough.answers.add(self.answer1_2)
+        self.assertTrue(self.question1 in walkthrough._answered_questions.all())
+        self.assertEqual(walkthrough.answers.all().count(), 1)
+        self.assertTrue(self.answer1_2 in walkthrough.answers.all())
+        self.assertFalse(self.answer1_1 in walkthrough.answers.all())
+        walkthrough.answers.remove(self.answer1_2)
+        self.assertFalse(self.question1 in walkthrough._answered_questions.all())
+
 
 class FormTest(TestCase):
     fixtures = ['test.json',]

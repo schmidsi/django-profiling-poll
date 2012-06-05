@@ -53,6 +53,19 @@ class Question(TimestampMixin):
         except IndexError:
             return None
 
+    @property
+    def multiple_answers(self):
+        # TODO: change this to a real feature
+        return False
+
+    def question_answered(self, walkthrough):
+        answers_to_self = walkthrough.answers.filter(question=self)
+
+        if answers_to_self.count() >= 1:
+            return True
+        else:
+            return False
+
 
 class Answer(TimestampMixin):
     question = models.ForeignKey(Question, related_name='answers')
@@ -110,9 +123,15 @@ def denormalize_walkthrough(signal, sender, instance, action, reverse, model, pk
     if 'post' in action and pk_set and len(pk_set):
 
         answer = model.objects.get(pk=pk_set.pop())
+        question = answer.question
 
         if 'add' in action:
-            instance._answered_questions.add(answer.question)
+            # question already answered -> keep last answer
+            if question in instance._answered_questions.all():
+                if not question.multiple_answers:
+                    instance.answers.exclude(id=answer.id).delete()
+            else:
+                instance._answered_questions.add(question)
 
             for answer_profile in answer.answerprofiles.all():
                 if not answer_profile.profile in instance._profiles.all():
@@ -125,8 +144,9 @@ def denormalize_walkthrough(signal, sender, instance, action, reverse, model, pk
                     walkthroughprofile = instance.walkthroughprofiles.get(profile=answer_profile.profile)
                     walkthroughprofile.quantifier += answer_profile.quantifier
                     walkthroughprofile.save()
+
         elif 'remove' in action:
-            instance._answered_questions.remove(answer.question)
+            instance._answered_questions.remove(question)
 
             for answer_profile in answer.answerprofiles.all():
                 if answer_profile.profile in instance._profiles.all():
