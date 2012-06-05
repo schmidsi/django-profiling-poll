@@ -132,3 +132,36 @@ class RequestWalkthroughTest(TestCase):
         # as long as the walkthrough is active, it should prefill the question form
         response = self.client.get('/bester-kurs/1/')
         self.assertEqual(response.context['form'].initial, {'answer' : 2})
+
+    def test_walkthrough_and_restart(self):
+        """
+        a full walkthrough will show the results page with the matching profile
+        and moves the completed walkthrough to session['completed_walkthroughs']
+        """
+        self.client.post('/bester-kurs/1/', {'answer' : 1})
+        response = self.client.post('/bester-kurs/3/', {'answer' : 10}, follow=True)
+
+        # The current walkthrough is sent as context
+        self.assertTrue(response.context['walkthrough'])
+
+        # But removed from the session.
+        self.assertEqual(self.client.session['current_walkthrough'], None)
+
+        # A restart is empty
+        response = self.client.get('/bester-kurs/1/')
+        self.assertEqual(response.context['form'].initial, {'answer' : 2})
+
+    def test_enforce_workflow(self):
+        """
+        A poll has to start with the first question in it. If a question is opened, with unanswered
+        preceding questions, redirect to the first unanswered question
+        """
+        self.assertNotIn('current_walkthrough', self.client.session)
+        response = self.client.get('/bester-kurs/3/', follow=True)
+        self.assertEqual(response.request['PATH_INFO'], '/bester-kurs/1/')
+
+        # TODO: Really test this behaviour
+
+
+
+
