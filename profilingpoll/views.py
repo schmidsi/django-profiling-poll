@@ -41,6 +41,14 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
         kwargs['object'] = self.get_object()
         return kwargs
 
+    def get_success_url(self):
+        next = self.get_object().next()
+
+        if next != None:
+            return next.get_absolute_url()
+        else:
+            return super(QuestionView, self).get_success_url()
+
 
 poll_list = SingleRedirectToDetailListView.as_view(
     queryset = Poll.objects.filter(active=True)

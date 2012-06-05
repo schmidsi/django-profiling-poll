@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from django.db import models
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from django.template.defaultfilters import truncatechars
@@ -40,15 +40,18 @@ class Question(TimestampMixin):
     def __unicode__(self):
         return truncatechars(self.text, 50)
 
-    @property
-    def is_multiple_choice(self):
-        """ for future updates regarding multiple choice questions
-        """
-        return False
-
     @models.permalink
     def get_absolute_url(self):
         return ('profilingpoll_question', (), {'poll__slug' : self.poll.slug, 'id' : self.id})
+
+    def next(self):
+        questionlist = list(self.poll.questions.all())
+        selfindex = questionlist.index(self)
+
+        try:
+            return questionlist[selfindex + 1]
+        except IndexError:
+            return None
 
 
 class Answer(TimestampMixin):
