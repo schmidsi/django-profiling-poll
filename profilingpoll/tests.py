@@ -1,10 +1,10 @@
-from django.utils import unittest
+from django.test import TestCase
 
-from .models import Poll, Question, Answer, Profile, AnswerProfile
+from .models import Poll, Question, Answer, Profile, AnswerProfile, Walkthrough
 from .forms import AnswerForm
 
 
-class CreationTest(unittest.TestCase):
+class CreationTest(TestCase):
     def test_creation_unprofiled(self):
         Poll.objects.all().delete()
         poll = Poll.objects.create()
@@ -30,7 +30,7 @@ class CreationTest(unittest.TestCase):
         self.assertEqual(answerprofile1_2.quantifier, 20)
 
 
-class WalkthroughTest(unittest.TestCase):
+class WalkthroughTest(TestCase):
     def setUp(self):
         Poll.objects.all().delete()
         self.poll1 = Poll.objects.create()
@@ -70,11 +70,53 @@ class WalkthroughTest(unittest.TestCase):
         self.assertEqual(walkthrough._answered_questions.all().count(), 0)
 
 
-class FormTest(unittest.TestCase):
-    def save_one_answer_test(self):
-        self.question = Question.objects.latest('id')
+class FormTest(TestCase):
+    fixtures = ['test.json',]
+
+    def test_save_one_answer(self):
+        self.question = Question.objects.get(id=1)
         self.form = AnswerForm({'answer' : 1}, question=self.question)
-        self.assertEqual(self.form.fields['answer'].choices, self.question.answers.all().values_list('id', 'text'))
+        self.assertEqual(len(self.form.fields['answer'].choices),
+                         len(self.question.answers.all())
+        )
         self.assertTrue(self.form.is_valid())
 
 
+class RequestWalkthroughTest(TestCase):
+    fixtures = ['test.json',]
+    urls = 'profilingpoll.urls'
+
+    def test_redirect_to_first_active_poll(self):
+        response = self.client.get('/', follow=True)
+
+        # request to / should redirect to the first acitve poll and then to the first question in this poll
+        self.assertEqual(len(response.redirect_chain), 2)
+        self.assertEqual(response.request['PATH_INFO'], '/bester-kurs/1/')
+
+        # only show the first question should not create a walkthrough
+        self.assertEqual(response.context['walkthrough'], None)
+
+    def test_answer_the_questions(self):
+        # send the form empty; should display errors and also not create a walkthrough
+        response = self.client.post('/bester-kurs/1/', {})
+        self.assertEqual(response.context['object'].id, 1)
+        self.assertTrue(response.context['form'].errors)
+        self.assertEqual(response.context['walkthrough'], None)
+
+        # really answer the question
+        response = self.client.post('/bester-kurs/1/', {'answer' : 1})
+        self.assertEqual(response.status_code, 302)
+        self.assertIsInstance(self.client.session['current_walkthrough'], Walkthrough)
+
+    def test_answer_a_question_2times(self):
+        self.client.post('/bester-kurs/1/', {'answer' : 1})
+        self.client.post('/bester-kurs/1/', {'answer' : 2})
+        self.assertIsInstance(self.client.session['current_walkthrough'], Walkthrough)
+
+        # be sure, only the last answer is in the walkthrough
+        walkthrough = self.client.session['current_walkthrough']
+        self.assertEqual(walkthrough.answers.all().count(), 1)
+
+        # as long as the walkthrough is active, it should prefill the question form
+        response = self.client.get('/bester-kurs/1/')
+        self.assertEqual(response.context['form'].initial, {'answer' : 2})

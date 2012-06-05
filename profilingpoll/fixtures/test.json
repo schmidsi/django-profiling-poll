@@ -4,11 +4,11 @@
 		"model":"profilingpoll.poll",
 		"fields":{
 			"description":"Finde heraus, welcher Kurs der beste f\u00fcr dich ist.",
-			"title":"asdfasdfasdf",
+			"title":"Bester Kurs",
 			"created":"2012-05-31T00:00:00",
-			"modified":"2012-05-31T20:12:50",
+			"modified":"2012-06-05T18:46:51",
 			"active":true,
-			"slug":"asdf"
+			"slug":"bester-kurs"
 		}
 	},
 	{
@@ -24,17 +24,6 @@
 		}
 	},
 	{
-		"pk":1,
-		"model":"profilingpoll.question",
-		"fields":{
-			"ordering":0,
-			"text":"Bliblablo",
-			"poll":1,
-			"modified":"2012-05-31T00:00:00",
-			"created":"2012-05-31T00:00:00"
-		}
-	},
-	{
 		"pk":2,
 		"model":"profilingpoll.question",
 		"fields":{
@@ -43,6 +32,28 @@
 			"poll":2,
 			"modified":"2012-05-31T00:00:00",
 			"created":"2012-05-31T00:00:00"
+		}
+	},
+	{
+		"pk":1,
+		"model":"profilingpoll.question",
+		"fields":{
+			"ordering":1,
+			"text":"Bliblablo",
+			"poll":1,
+			"modified":"2012-06-05T16:10:18",
+			"created":"2012-05-31T00:00:00"
+		}
+	},
+	{
+		"pk":3,
+		"model":"profilingpoll.question",
+		"fields":{
+			"ordering":1,
+			"text":"Asdf",
+			"poll":1,
+			"modified":"2012-06-05T16:07:43",
+			"created":"2012-06-05T15:32:00"
 		}
 	},
 	{
@@ -123,12 +134,68 @@
 		}
 	},
 	{
+		"pk":8,
+		"model":"profilingpoll.answer",
+		"fields":{
+			"ordering":0,
+			"text":"erthdths dr",
+			"question":3,
+			"modified":"2012-06-05T15:32:19",
+			"created":"2012-06-05T15:32:19"
+		}
+	},
+	{
+		"pk":9,
+		"model":"profilingpoll.answer",
+		"fields":{
+			"ordering":0,
+			"text":"werw zwerz ewrtz",
+			"question":3,
+			"modified":"2012-06-05T15:32:19",
+			"created":"2012-06-05T15:32:19"
+		}
+	},
+	{
+		"pk":10,
+		"model":"profilingpoll.answer",
+		"fields":{
+			"ordering":0,
+			"text":" wert wert 3q4",
+			"question":3,
+			"modified":"2012-06-05T15:32:19",
+			"created":"2012-06-05T15:32:19"
+		}
+	},
+	{
+		"pk":11,
+		"model":"profilingpoll.answer",
+		"fields":{
+			"ordering":0,
+			"text":" we5zdfsg sdfg asdf asdf",
+			"question":3,
+			"modified":"2012-06-05T15:32:19",
+			"created":"2012-06-05T15:32:19"
+		}
+	},
+	{
 		"pk":1,
 		"model":"profilingpoll.profile",
 		"fields":{
 			"text":"Am besten, du lernst jetzt mal Deutsch",
 			"modified":"2012-05-31T00:00:00",
 			"created":"2012-05-31T00:00:00"
+		}
+	},
+	{
+		"pk":1,
+		"model":"profilingpoll.walkthrough",
+		"fields":{
+			"created":"2012-06-05T17:02:39",
+			"modified":"2012-06-05T17:02:39",
+			"answers":[2],
+			"_answered_questions":[1],
+			"_completed":null,
+			"poll":1
 		}
 	}
 ]

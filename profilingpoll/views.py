@@ -3,7 +3,7 @@ from django.views.generic import ListView, RedirectView, FormView
 from django.views.generic.detail import SingleObjectTemplateResponseMixin, SingleObjectMixin
 
 from .forms import AnswerForm
-from .models import Poll, Question
+from .models import Poll, Question, Walkthrough
 
 
 class SingleRedirectToDetailListView(ListView):
@@ -39,7 +39,17 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
 
     def get_context_data(self, **kwargs):
         kwargs['object'] = self.get_object()
+        kwargs['walkthrough'] = self.request.session.get('current_walkthrough', None)
         return kwargs
+
+    def form_valid(self, form):
+        if not self.request.session.get('current_walkthrough', None):
+            self.request.session['current_walkthrough'] = Walkthrough.objects.create(poll=self.object.poll)
+
+        answer = self.object.answers.get(id=form.cleaned_data['answer'])
+        self.request.session['current_walkthrough'].answers.add(answer)
+
+        return super(QuestionView, self).form_valid(form)
 
     def get_success_url(self):
         next = self.get_object().next()
