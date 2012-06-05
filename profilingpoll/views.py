@@ -70,7 +70,7 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
         else:
             return reverse('profilingpoll_poll_finished', kwargs={'slug' : self.object.poll.slug})
 
-class PollFinishView(DetailView):
+class ResultView(DetailView):
     model = Walkthrough
 
     def get(self, request, *args, **kwargs):
@@ -93,4 +93,4 @@ poll_list = SingleRedirectToDetailListView.as_view(
 
 poll_detail = RedirectToFirstQuestion.as_view()
 question = QuestionView.as_view()
-poll_finish = PollFinishView.as_view()
+result = ResultView.as_view()
