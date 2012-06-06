@@ -31,6 +31,9 @@ class Poll(TimestampMixin):
     def get_first_question(self):
         return self.questions.all()[0]
 
+    def get_question_list(self):
+        return list(self.questions.all())
+
 
 class Question(TimestampMixin):
     poll = models.ForeignKey(Poll, related_name='questions')
@@ -47,12 +50,15 @@ class Question(TimestampMixin):
     def get_absolute_url(self):
         return ('profilingpoll_question', (), {'poll__slug' : self.poll.slug, 'id' : self.id})
 
-    def next(self):
-        questionlist = list(self.poll.questions.all())
-        selfindex = questionlist.index(self)
+    def get_index(self):
+        """
+        returns the number the question has in the poll
+        """
+        return self.poll.get_question_list().index(self)
 
+    def next(self):
         try:
-            return questionlist[selfindex + 1]
+            return self.poll.get_question_list()[self.get_index() + 1]
         except IndexError:
             return None
 
