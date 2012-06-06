@@ -115,7 +115,7 @@ class ResultView(DetailView):
         if queryset is None:
             queryset = self.get_queryset()
 
-        return queryset.get(id=signing.loads(self.kwargs['hash']))
+        return get_object_or_404(queryset, id=signing.loads(self.kwargs['hash']))
 
 
 poll_list = SingleRedirectToDetailListView.as_view(

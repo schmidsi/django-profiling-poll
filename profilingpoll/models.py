@@ -38,7 +38,7 @@ class Question(TimestampMixin):
     ordering = models.PositiveIntegerField(default=0)
 
     class Meta:
-        ordering = ('ordering', 'created', 'id')
+        ordering = ('poll', 'ordering', 'created', 'id')
 
     def __unicode__(self):
         return truncatechars(self.text, 50)
@@ -75,8 +75,11 @@ class Answer(TimestampMixin):
     text = models.TextField(_('text'))
     ordering = models.PositiveIntegerField(default=0)
 
+    class Meta:
+        ordering = ('question', 'ordering', 'created', 'id')
+
     def __unicode__(self):
-        return truncatechars(self.text, 50)
+        return u'%s - %s ' %(self.question, truncatechars(self.text, 50))
 
 
 class Profile(TimestampMixin):
@@ -169,10 +172,13 @@ def denormalize_walkthrough(signal, sender, instance, action, reverse, model, pk
                     walkthroughprofile.quantifier -= answer_profile.quantifier
                     walkthroughprofile.save()
 
-        all_questions_count = instance.poll.questions.all().count()
+        all_questions_count = instance.poll.questions.all().count() or 1
         answered_questions_count = instance._answered_questions.all().count()
 
-        instance._progress = float(answered_questions_count) / float(all_questions_count)
+        if answered_questions_count > 0:
+            instance._progress = float(answered_questions_count) / float(all_questions_count)
+        else:
+            instance._progress = 0
 
         if answered_questions_count == all_questions_count:
             instance._completed = datetime.now()

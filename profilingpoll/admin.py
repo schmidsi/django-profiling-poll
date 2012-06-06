@@ -25,24 +25,32 @@ admin.site.register(Question,
     ]
 )
 
-admin.site.register(Answer,
-    list_display = ('__unicode__', 'question', 'created', 'modified'),
-    list_filter = ('question','question__poll'),
+#admin.site.register(Answer,
+#    list_display = ('__unicode__', 'question', 'created', 'modified'),
+#    list_filter = ('question','question__poll'),
+#    inlines = [
+#        inline(AnswerProfile, extra=0)
+#    ]
+#)
+
+admin.site.register(Profile,
+    list_display = ('__unicode__',),
+    list_filter = ('answers__question__poll', 'answers__question', 'answers',),
     inlines = [
         inline(AnswerProfile, extra=0)
     ]
 )
 
-admin.site.register(Profile,
-    list_display = ('__unicode__',),
-    list_filter = ('answers', 'answers__question', 'answers__question__poll',)
-)
-
 admin.site.register(Walkthrough,
-    list_display = ('poll', '_completed'),
+    list_display = ('poll', '_progress', '_completed', 'created', 'modified'),
     list_filter = ('poll',),
-    readonly_fields = ('_answered_questions', '_completed', '_profiles'),
+    readonly_fields = ('poll', 'answers', '_answered_questions', '_completed', '_profiles', '_progress'),
     inlines = [
+        inline(Walkthrough.answers.through,
+            extra=0,
+            max_num=0,
+            readonly_fields = ('answer',)
+        ),
         inline(WalkthroughProfile,
             extra=0,
             max_num=0,
