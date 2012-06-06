@@ -51,19 +51,35 @@ class WalkthroughTest(TestCase):
 
     def test_simplewalkthrough(self):
         walkthrough = self.poll1.walkthroughs.create()
+
+        # give first answer
         walkthrough.answers.add(self.answer1_1)
         self.assertFalse(walkthrough.completed)
         self.assertEqual(walkthrough.get_matching_profile(), self.profile1)
+        self.assertEqual(walkthrough.progress, 0.5)
+        self.assertEqual(walkthrough.get_next_question(), self.question2)
+
+        # give second answer which should change the walkthrough profile
         walkthrough.answers.add(self.answer2_2)
         self.assertTrue(walkthrough.completed)
         self.assertEqual(walkthrough.get_matching_profile(), self.profile2)
         self.assertEqual(walkthrough.walkthroughprofiles.get(profile=self.profile2).quantifier, 25)
+        self.assertEqual(walkthrough.progress, 1)
+
+        # should be finished now
+        self.assertTrue(walkthrough.completed)
+
+        # remove first answer
         walkthrough.answers.remove(self.answer1_1)
         self.assertEqual(walkthrough.walkthroughprofiles.get(profile=self.profile1).quantifier, 0)
+
+        # double add first answer.
         walkthrough.answers.add(self.answer1_1)
         self.assertEqual(walkthrough.walkthroughprofiles.get(profile=self.profile1).quantifier, 10)
         walkthrough.answers.add(self.answer1_1)
         self.assertEqual(walkthrough.walkthroughprofiles.get(profile=self.profile1).quantifier, 10)
+
+        # remove all answers
         walkthrough.answers.clear()
         self.assertEqual(walkthrough.answers.all().count(), 0)
         self.assertEqual(walkthrough._profiles.all().count(), 0)
@@ -141,16 +157,16 @@ class RequestWalkthroughTest(TestCase):
         self.client.post('/bester-kurs/1/', {'answer' : 1})
         response = self.client.post('/bester-kurs/3/', {'answer' : 10}, follow=True)
 
-        # The current walkthrough is sent as context
-        self.assertTrue(response.context['walkthrough'])
-        #self.assertTrue(response.context['walkthrough'].completed)
+        # The current walkthrough is sent as context and completed
+        self.assertTrue(response.context['object'])
+        self.assertTrue(response.context['object'].completed)
 
         # But removed from the session.
         self.assertEqual(self.client.session['current_walkthrough'], None)
 
         # A restart is empty
         response = self.client.get('/bester-kurs/1/')
-        self.assertEqual(response.context['form'].initial, {'answer' : 2})
+        self.assertEqual(response.context['form'].initial, {})
 
     def test_enforce_workflow(self):
         """

@@ -97,9 +97,10 @@ class Walkthrough(TimestampMixin):
     poll = models.ForeignKey(Poll, related_name='walkthroughs')
     answers = models.ManyToManyField(Answer, blank=True, null=True)
 
-    # Denormalizations
+    # Denormalizations:
     _completed = models.DateTimeField(blank=True, null=True)
     _answered_questions = models.ManyToManyField(Question)
+    _progress = models.FloatField(blank=True, null=True) # between 0 and 1
     _profiles = models.ManyToManyField(Profile, through='WalkthroughProfile', blank=True, null=True,
         related_name='walkthrough_set')
 
@@ -111,8 +112,15 @@ class Walkthrough(TimestampMixin):
     def completed(self):
         return self._completed
 
+    @property
+    def progress(self):
+        return self._progress
+
     def get_matching_profile(self):
         return self.walkthroughprofiles.order_by('-quantifier')[0].profile
+
+    def get_next_question(self):
+        return self.poll.questions.all().exclude(id__in=self._answered_questions.all().values_list('id', flat=True))[0]
 
 
 class WalkthroughProfile(TimestampMixin):
@@ -157,12 +165,22 @@ def denormalize_walkthrough(signal, sender, instance, action, reverse, model, pk
                     walkthroughprofile.quantifier -= answer_profile.quantifier
                     walkthroughprofile.save()
 
-        if instance._answered_questions.all().count() == instance.poll.questions.all().count():
+        all_questions_count = instance.poll.questions.all().count()
+        answered_questions_count = instance._answered_questions.all().count()
+
+        instance._progress = float(answered_questions_count) / float(all_questions_count)
+
+        if answered_questions_count == all_questions_count:
             instance._completed = datetime.now()
         else:
             instance._completed = None
 
+        instance.save()
+
     elif 'post_clear' in action:
         instance._answered_questions.clear()
         instance._profiles.clear()
+        instance._completed = None
+        instance._progress = None
+        instance.save()
 

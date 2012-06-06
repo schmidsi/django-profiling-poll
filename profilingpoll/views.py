@@ -1,3 +1,4 @@
+from django.core import signing
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect, get_object_or_404
 from django.views.generic import ListView, RedirectView, FormView, DetailView
@@ -68,7 +69,30 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
         if next != None:
             return next.get_absolute_url()
         else:
-            return reverse('profilingpoll_poll_finished', kwargs={'slug' : self.object.poll.slug})
+            walkthrough = self.request.session.get('current_walkthrough')
+            return reverse('profilingpoll_result', kwargs={'hash' : signing.dumps(walkthrough.id) })
+
+    def render_to_response(self, context, **response_kwargs):
+        """
+        Redirect, if this question can not be answered now. E.g. outside workflow.
+        """
+        walkthrough = self.request.session.get('current_walkthrough', None)
+        first_question = self.object.poll.get_first_question()
+
+        # first case: if there is no walkthrough in the session, this has to be the first question
+        if not walkthrough:
+            if self.object != first_question:
+                return redirect(first_question)
+        else:
+            next_question = walkthrough.get_next_question()
+
+            # second case, the answer isn't answered and not the next answer
+            if not self.object.question_answered(walkthrough) and not self.object == next_question:
+                return redirect(next_question)
+
+        # else: Do it
+        return super(QuestionView, self).render_to_response(context, **response_kwargs)
+
 
 class ResultView(DetailView):
     model = Walkthrough
@@ -80,11 +104,15 @@ class ResultView(DetailView):
         if not self.request.session.get('completed_walkthroughs', None):
             self.request.session['completed_walkthroughs'] = []
         self.request.session['completed_walkthroughs'].append(self.request.session['current_walkthrough'])
+        self.request.session['current_walkthrough'] = None
 
-        return super(PollFinishView, self).get(request, *args, **kwargs)
+        return super(DetailView, self).get(request, *args, **kwargs)
 
     def get_object(self, queryset=None):
-        return self.request.session['current_walkthrough']
+        if queryset is None:
+            queryset = self.get_queryset()
+
+        return queryset.get(id=signing.loads(self.kwargs['hash']))
 
 
 poll_list = SingleRedirectToDetailListView.as_view(
