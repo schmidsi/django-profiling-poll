@@ -117,7 +117,7 @@ class Walkthrough(TimestampMixin):
         return self._progress
 
     def get_matching_profile(self):
-        return self.walkthroughprofiles.order_by('-quantifier')[0].profile
+        return self.walkthroughprofiles.order_by('-quantifier').get().profile
 
     def get_next_question(self):
         try:

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-{{ object }}
+	{{ object }} {{ object.id }}
+	{{ object.get_matching_profile }}
 {% endblock %}
