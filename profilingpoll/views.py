@@ -5,7 +5,7 @@ from django.views.generic import ListView, RedirectView, FormView, DetailView
 from django.views.generic.detail import SingleObjectTemplateResponseMixin, SingleObjectMixin
 
 from .forms import AnswerForm
-from .models import Poll, Question, Walkthrough
+from .models import Poll, Question, Walkthrough, Answer
 
 
 class SingleRedirectToDetailListView(ListView):
@@ -44,8 +44,11 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
         walkthrough = self.request.session.get('current_walkthrough', None)
 
         if walkthrough and self.object in walkthrough.answered_questions:
-            given_answer = walkthrough.answers.filter(question=self.object)[0]
-            initial.update({'answer' : given_answer.id})
+            try:
+                given_answer = walkthrough.answers.filter(question=self.object).get()
+                initial.update({'answer' : given_answer.id})
+            except Answer.DoesNotExist:
+                pass
 
         return initial
 
@@ -87,7 +90,7 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
             next_question = walkthrough.get_next_question()
 
             # second case, the answer isn't answered and not the next answer
-            if not self.object.question_answered(walkthrough) and not self.object == next_question:
+            if next_question and not self.object.question_answered(walkthrough) and not self.object == next_question:
                 return redirect(next_question)
 
         # else: Do it

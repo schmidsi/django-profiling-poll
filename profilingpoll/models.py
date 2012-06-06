@@ -120,7 +120,11 @@ class Walkthrough(TimestampMixin):
         return self.walkthroughprofiles.order_by('-quantifier')[0].profile
 
     def get_next_question(self):
-        return self.poll.questions.all().exclude(id__in=self._answered_questions.all().values_list('id', flat=True))[0]
+        try:
+            return self.poll.questions.all().exclude(id__in=self._answered_questions.all().values_list('id', flat=True))[0]
+        except IndexError:
+            # All questions are answered
+            return None
 
 
 class WalkthroughProfile(TimestampMixin):
