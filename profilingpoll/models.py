@@ -92,11 +92,17 @@ class Answer(TimestampMixin):
 
 
 class Profile(TimestampMixin):
+    description = models.CharField(_('description'), max_length=50, blank=True, null=True,
+        help_text=_('description for internal use'))
     text = models.TextField(_('text'))
     answers = models.ManyToManyField(Answer, through='AnswerProfile', related_name='profiles')
+    link = models.URLField(blank=True, null=True)
 
     def __unicode__(self):
-        return truncatechars(self.text, 50)
+        if self.description:
+            return self.description
+        else:
+            return truncatechars(self.text, 50)
 
 
 class AnswerProfile(TimestampMixin):
