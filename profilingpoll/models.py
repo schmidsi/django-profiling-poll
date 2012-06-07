@@ -118,6 +118,9 @@ class Walkthrough(TimestampMixin):
     _profiles = models.ManyToManyField(Profile, through='WalkthroughProfile', blank=True, null=True,
         related_name='walkthrough_set')
 
+    def __unicode__(self):
+        return u'%s %s %s %s %s' %(self.id, self.poll, self.ip, self.email, self.modified)
+
     @property
     def answered_questions(self):
         return self._answered_questions.all()

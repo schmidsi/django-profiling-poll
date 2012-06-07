@@ -4,7 +4,7 @@ from django.shortcuts import redirect, get_object_or_404
 from django.views.generic import ListView, RedirectView, FormView, DetailView
 from django.views.generic.detail import SingleObjectTemplateResponseMixin, SingleObjectMixin
 
-from .forms import AnswerForm
+from .forms import AnswerForm, EmailForm
 from .models import Poll, Question, Walkthrough, Answer
 
 
@@ -67,6 +67,7 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
 
         answer = self.object.answers.get(id=form.cleaned_data['answer'])
         self.request.session['current_walkthrough'].answers.add(answer)
+        self.request.session.modified = True
 
         return super(QuestionView, self).form_valid(form)
 
@@ -76,8 +77,7 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
         if next != None:
             return next.get_absolute_url()
         else:
-            walkthrough = self.request.session.get('current_walkthrough')
-            return reverse('profilingpoll_result', kwargs={'hash' : signing.dumps(walkthrough.id) })
+            return reverse('profilingpoll_get_email', kwargs={'slug' : self.object.poll.slug})
 
     def render_to_response(self, context, **response_kwargs):
         """
@@ -122,10 +122,71 @@ class ResultView(DetailView):
         return get_object_or_404(queryset, id=signing.loads(self.kwargs['hash']))
 
 
+class EmailView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixin):
+    form_class = EmailForm
+    model = Poll
+    template_name = 'profilingpoll/poll_finished.html'
+
+    @property
+    def object(self):
+        return self.get_object()
+
+    def get_object(self, queryset=None):
+        queryset = queryset or self.get_queryset()
+        return queryset.get(**self.kwargs)
+
+    def form_valid(self, form):
+        walkthrough = self.request.session.get('current_walkthrough', None)
+        first_question = self.get_object().get_first_question()
+
+        if not walkthrough:
+            return redirect(first_question)
+
+        # somehow, the session walkthrough differs from the database walkthrough. so get it proper
+        walkthrough = Walkthrough.objects.get(id=walkthrough.id)
+
+        if not walkthrough.completed:
+            return redirect(walkthrough.get_next_question())
+
+        if form.cleaned_data['email']:
+            walkthrough.email = form.cleaned_data['email']
+            walkthrough.save()
+        self.request.session['current_walkthrough'] = walkthrough
+
+        return super(EmailView, self).form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        kwargs['object'] = self.get_object()
+        kwargs['walkthrough'] = self.request.session.get('current_walkthrough', None)
+        return kwargs
+
+    def get_success_url(self):
+        walkthrough = self.request.session.get('current_walkthrough')
+        return reverse('profilingpoll_result', kwargs={'hash' : signing.dumps(walkthrough.id) })
+
+    def render_to_response(self, context, **response_kwargs):
+        walkthrough = self.request.session.get('current_walkthrough', None)
+        first_question = self.get_object().get_first_question()
+
+        if not walkthrough:
+            return redirect(first_question)
+
+        # somehow, the session walkthrough differs from the database walkthrough. so get it proper
+        walkthrough = Walkthrough.objects.get(id=walkthrough.id)
+
+        if not walkthrough.completed:
+            return redirect(walkthrough.get_next_question())
+
+        return super(EmailView, self).render_to_response(context, **response_kwargs)
+
+
+
+
 poll_list = SingleRedirectToDetailListView.as_view(
     queryset = Poll.objects.filter(active=True)
 )
 
+get_email = EmailView.as_view()
 poll_detail = RedirectToFirstQuestion.as_view()
 question = QuestionView.as_view()
 result = ResultView.as_view()

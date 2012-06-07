@@ -13,3 +13,7 @@ class AnswerForm(forms.Form):
             widget=forms.RadioSelect,
             choices=self.question.answers.all().values_list('id', 'text')
         )
+
+
+class EmailForm(forms.Form):
+    email = forms.EmailField(required=False, label="Mail eintragen")
