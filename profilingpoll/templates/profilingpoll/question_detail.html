@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-{{ object.text }}
+{{ object.finish_text }}
 <form action="." method="post">
 	<div style="display:none">
 	    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
