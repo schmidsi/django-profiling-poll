@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.core import signing
 from django.db import models
 from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
@@ -120,6 +121,10 @@ class Walkthrough(TimestampMixin):
 
     def __unicode__(self):
         return u'%s %s %s %s %s' %(self.id, self.poll, self.ip, self.email, self.modified)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('profilingpoll_result', (), {'hash' : signing.dumps(self.id)})
 
     @property
     def answered_questions(self):

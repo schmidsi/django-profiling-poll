@@ -105,13 +105,12 @@ class ResultView(DetailView):
     model = Walkthrough
 
     def get(self, request, *args, **kwargs):
-        if not self.request.session.get('current_walkthrough', None):
-            return redirect(self.get_object().poll.get_first_question())
-
-        if not self.request.session.get('completed_walkthroughs', None):
-            self.request.session['completed_walkthroughs'] = []
-        self.request.session['completed_walkthroughs'].append(self.request.session['current_walkthrough'])
-        self.request.session['current_walkthrough'] = None
+        if self.request.session.get('current_walkthrough', None):
+            if not self.request.session.get('completed_walkthroughs', None):
+                self.request.session['completed_walkthroughs'] = []
+            self.request.session['completed_walkthroughs'].append(self.request.session['current_walkthrough'])
+            self.request.session['current_walkthrough'] = None
+            self.request.session.modified = True
 
         return super(DetailView, self).get(request, *args, **kwargs)
 
@@ -162,7 +161,7 @@ class EmailView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixin):
 
     def get_success_url(self):
         walkthrough = self.request.session.get('current_walkthrough')
-        return reverse('profilingpoll_result', kwargs={'hash' : signing.dumps(walkthrough.id) })
+        return walkthrough.get_absolute_url()
 
     def render_to_response(self, context, **response_kwargs):
         walkthrough = self.request.session.get('current_walkthrough', None)

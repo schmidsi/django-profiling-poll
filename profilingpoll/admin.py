@@ -33,13 +33,17 @@ admin.site.register(Question,
 #    ]
 #)
 
-admin.site.register(Profile,
-    list_display = ('__unicode__',),
-    list_filter = ('answers__question__poll', 'answers__question', 'answers',),
+class ProfileAdmin(admin.ModelAdmin):
+    class Media:
+        js = ('lib/tiny_mce/tiny_mce.js', 'js/tinymce_init.js')
+
+    list_display = ('__unicode__',)
+    list_filter = ('answers__question__poll', 'answers__question', 'answers',)
     inlines = [
         inline(AnswerProfile, extra=0)
     ]
-)
+
+admin.site.register(Profile, ProfileAdmin)
 
 admin.site.register(Walkthrough,
     list_display = ('poll', 'email', 'get_matching_profile', '_progress', '_completed', 'created', 'modified', 'ip',
