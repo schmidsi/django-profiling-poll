@@ -59,7 +59,11 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
 
     def form_valid(self, form):
         if not self.request.session.get('current_walkthrough', None):
-            self.request.session['current_walkthrough'] = Walkthrough.objects.create(poll=self.object.poll)
+            self.request.session['current_walkthrough'] = Walkthrough.objects.create(
+                poll = self.object.poll,
+                ip = self.request.META['REMOTE_ADDR'] or None,
+                user_agent = self.request.META['HTTP_USER_AGENT'] or None
+            )
 
         answer = self.object.answers.get(id=form.cleaned_data['answer'])
         self.request.session['current_walkthrough'].answers.add(answer)

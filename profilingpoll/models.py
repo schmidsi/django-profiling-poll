@@ -20,6 +20,8 @@ class Poll(TimestampMixin):
     title = models.CharField(max_length=50)
     slug = models.SlugField(unique=True)
     description = models.TextField(_('description'), blank=True, null=True)
+    finish_text = models.TextField(_('finish_text'), blank=True, null=True,
+        help_text=_('Text which will be displayed at the end of the poll'))
 
     def __unicode__(self):
         return self.title
@@ -105,6 +107,9 @@ class AnswerProfile(TimestampMixin):
 class Walkthrough(TimestampMixin):
     poll = models.ForeignKey(Poll, related_name='walkthroughs')
     answers = models.ManyToManyField(Answer, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    ip = models.IPAddressField(blank=True, null=True)
+    user_agent = models.CharField(max_length=255, blank=True, null=True)
 
     # Denormalizations:
     _completed = models.DateTimeField(blank=True, null=True)

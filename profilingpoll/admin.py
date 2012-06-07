@@ -42,9 +42,12 @@ admin.site.register(Profile,
 )
 
 admin.site.register(Walkthrough,
-    list_display = ('poll', '_progress', '_completed', 'created', 'modified'),
+    list_display = ('poll', 'email', 'get_matching_profile', '_progress', '_completed', 'created', 'modified', 'ip',
+                    'user_agent'),
     list_filter = ('poll',),
-    readonly_fields = ('poll', 'answers', '_answered_questions', '_completed', '_profiles', '_progress'),
+    fields = ('poll', '_progress', '_completed', 'email', 'user_agent', 'ip'),
+    readonly_fields = ('poll', 'answers', '_answered_questions', '_completed', '_profiles', '_progress', 'email',
+                       'ip', 'user_agent'),
     inlines = [
         inline(Walkthrough.answers.through,
             extra=0,
