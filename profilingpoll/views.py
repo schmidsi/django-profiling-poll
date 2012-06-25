@@ -45,9 +45,9 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
 
         if walkthrough and self.object in walkthrough.answered_questions:
             try:
-                given_answer = walkthrough.answers.filter(question=self.object).get()
+                given_answer = walkthrough.answers.filter(question=self.object)[0]
                 initial.update({'answer' : given_answer.id})
-            except Answer.DoesNotExist:
+            except IndexError:
                 pass
 
         return initial

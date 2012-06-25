@@ -175,7 +175,7 @@ def denormalize_walkthrough(signal, sender, instance, action, reverse, model, pk
             # question already answered -> keep last answer
             if question in instance._answered_questions.all():
                 if not question.multiple_answers:
-                    instance.answers.exclude(id=answer.id).delete()
+                    instance.answers.through.objects.filter(walkthrough=instance, answer__question=question).exclude(answer=answer).delete()
             else:
                 instance._answered_questions.add(question)
 
