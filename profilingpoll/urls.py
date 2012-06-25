@@ -8,5 +8,5 @@ urlpatterns = patterns('',
     url(r'^(?P<slug>[\w-]+)/$', poll_detail, name='profilingpoll_poll_detail'),
     url(r'^(?P<poll__slug>[\w-]+)/(?P<id>\d+)/$', question, name='profilingpoll_question'),
     url(r'^(?P<slug>[\w-]+)/finished/$', get_email, name='profilingpoll_get_email'),
-    url(r'^result/(?P<hash>[\S^/\?=#]+)$', result, name='profilingpoll_result'),
+    url(r'^result/(?P<hash>[\S^/\?=#]+)/$', result, name='profilingpoll_result'),
 )
