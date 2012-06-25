@@ -13,7 +13,7 @@ class SingleRedirectToDetailListView(ListView):
         if Poll.objects.filter(active=True).count() == 1:
             return redirect(Poll.objects.filter(active=True)[0])
         else:
-            return super(ListView, self).render_to_response(self, context, **response_kwargs)
+            return super(ListView, self).render_to_response(context, **response_kwargs)
 
 
 class RedirectToFirstQuestion(RedirectView):
