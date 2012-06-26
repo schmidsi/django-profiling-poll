@@ -99,6 +99,7 @@ class Profile(TimestampMixin):
     text = models.TextField(_('text'))
     answers = models.ManyToManyField(Answer, through='AnswerProfile', related_name='profiles')
     link = models.URLField(blank=True, null=True)
+    link_text = models.CharField(max_length=100, blank=True, null=True)
 
     def __unicode__(self):
         if self.description:
