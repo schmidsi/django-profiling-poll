@@ -23,6 +23,8 @@ class Poll(TimestampMixin):
     description = models.TextField(_('description'), blank=True, null=True)
     finish_text = models.TextField(_('finish_text'), blank=True, null=True,
         help_text=_('Text which will be displayed at the end of the poll'))
+    default_profile = models.ForeignKey('Profile', blank=True, null=True,
+        help_text=_('If no profile matches according to the answers, this profile is assigned to the walkthrough'))
 
     def __unicode__(self):
         return self.title
@@ -148,7 +150,7 @@ class Walkthrough(TimestampMixin):
         try:
             return self.walkthroughprofiles.order_by('-quantifier')[0].profile
         except IndexError:
-            return None
+            return self.poll.default_profile or None
 
     def get_next_question(self):
         try:
