@@ -183,7 +183,11 @@ class EmailView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixin):
         walkthrough = Walkthrough.objects.get(id=walkthrough.id)
 
         if not walkthrough.completed:
-            return redirect(walkthrough.get_next_question())
+            next = walkthrough.get_next_question()
+            
+            # get_next_question double tests, if the walkthrough is completed and sets it, if needed.
+            if next:
+                return redirect(next)
 
         return super(EmailView, self).render_to_response(context, **response_kwargs)
 

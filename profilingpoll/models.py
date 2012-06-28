@@ -158,6 +158,11 @@ class Walkthrough(TimestampMixin):
             return self.poll.questions.all().exclude(id__in=self._answered_questions.all().values_list('id', flat=True))[0]
         except IndexError:
             # All questions are answered
+            
+            if not self._completed:
+                self._completed = datetime.now()
+                self.save()
+            
             return None
 
 
