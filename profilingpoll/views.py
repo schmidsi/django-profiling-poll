@@ -5,7 +5,7 @@ from django.views.generic import ListView, RedirectView, FormView, DetailView
 from django.views.generic.detail import SingleObjectTemplateResponseMixin, SingleObjectMixin
 
 from .forms import AnswerForm, EmailForm
-from .models import Poll, Question, Walkthrough, Answer
+from .models import Poll, Question, Walkthrough
 
 
 class SingleRedirectToDetailListView(ListView):
@@ -30,6 +30,15 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
     def object(self):
         return self.get_object()
 
+    def get(self, request, *args, **kwargs):
+        form_class = self.get_form_class()
+
+        try:
+            form = self.get_form(form_class)
+            return self.render_to_response(self.get_context_data(form=form))
+        except Question.DoesNotExist:
+            return redirect('profilingpoll_poll_list')
+
     def get_object(self, queryset=None):
         queryset = queryset or self.get_queryset()
         return queryset.get(**self.kwargs)
@@ -46,7 +55,7 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
         if walkthrough and self.object in walkthrough.answered_questions:
             try:
                 given_answer = walkthrough.answers.filter(question=self.object)[0]
-                initial.update({'answer' : given_answer.id})
+                initial.update({'answer': given_answer.id})
             except IndexError:
                 pass
 
@@ -60,9 +69,9 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
     def form_valid(self, form):
         if not self.request.session.get('current_walkthrough', None):
             self.request.session['current_walkthrough'] = Walkthrough.objects.create(
-                poll = self.object.poll,
-                ip = self.request.META['REMOTE_ADDR'] or None,
-                user_agent = self.request.META['HTTP_USER_AGENT'] or None
+                poll=self.object.poll,
+                ip=self.request.META['REMOTE_ADDR'] or None,
+                user_agent=self.request.META['HTTP_USER_AGENT'] or None
             )
 
         answer = self.object.answers.get(id=form.cleaned_data['answer'])
@@ -77,7 +86,7 @@ class QuestionView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixi
         if next != None:
             return next.get_absolute_url()
         else:
-            return reverse('profilingpoll_get_email', kwargs={'slug' : self.object.poll.slug})
+            return reverse('profilingpoll_get_email', kwargs={'slug': self.object.poll.slug})
 
     def render_to_response(self, context, **response_kwargs):
         """
@@ -179,10 +188,8 @@ class EmailView(FormView, SingleObjectTemplateResponseMixin, SingleObjectMixin):
         return super(EmailView, self).render_to_response(context, **response_kwargs)
 
 
-
-
 poll_list = SingleRedirectToDetailListView.as_view(
-    queryset = Poll.objects.filter(active=True)
+    queryset=Poll.objects.filter(active=True)
 )
 
 get_email = EmailView.as_view()
